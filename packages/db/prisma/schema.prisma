@@ -1,0 +1,126 @@
+// This is a Prisma schema file
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Enum for Subscription Types
+enum SubscriptionType {
+  FREE
+  BASIC
+  PREMIUM
+}
+
+model User {
+  id             Int              @id @default(autoincrement())
+  email          String           @unique
+  password       String
+  role           String           // Possible values 'USER', 'ADMIN'
+  phone          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  appointments    Appointment[]
+}
+
+model Admin {
+  id           Int    @id @default(autoincrement())
+  email        String @unique
+  password     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Province {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  municipalities Municipality[]
+}
+
+model Municipality {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  province  Province  @relation(fields: [provinceId], references: [id])
+  provinceId Int
+  businesses Business[]
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  businesses Business[]
+}
+
+model Business {
+  id             Int              @id @default(autoincrement())
+  name           String
+  description    String?
+  category       Category          @relation(fields: [categoryId], references: [id])
+  categoryId     Int
+  municipality    Municipality       @relation(fields: [municipalityId], references: [id])
+  municipalityId Int
+  photos         BusinessPhoto[]
+  hours          BusinessHour[]
+}
+
+model BusinessPhoto {
+  id        Int     @id @default(autoincrement())
+  url       String  
+  business  Business  @relation(fields: [businessId], references: [id])
+  businessId Int
+}
+
+model BusinessHour {
+  id         Int      @id @default(autoincrement())
+  day        String   // e.g., 'Monday'
+  open       String   // Time when the business opens
+  close      String   // Time when the business closes
+  business    Business  @relation(fields: [businessId], references: [id])
+  businessId Int
+}
+
+model SectorModule {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+}
+
+model Subscription {
+  id                  Int                @id @default(autoincrement())
+  userId              Int               @unique
+  type                SubscriptionType   
+  startDate          DateTime
+  endDate            DateTime
+  user               User               @relation(fields: [userId], references: [id])
+}
+
+model ContactEvent {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  occurredAt DateTime @default(now())
+  user      User       @relation(fields: [userId], references: [id])
+}
+
+model Appointment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  date      DateTime
+  user      User       @relation(fields: [userId], references: [id])
+}
+
+model Validation {
+  id            Int      @id @default(autoincrement())
+  userId       Int
+  validatedAt   DateTime @default(now())
+  user         User       @relation(fields: [userId], references: [id])
+}
+
+model Waitlist {
+  id        Int      @id @default(autoincrement())
+  userId    Int      
+  joinedAt  DateTime  @default(now())
+  user      User       @relation(fields: [userId], references: [id])
+}
